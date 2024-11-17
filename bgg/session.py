@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import aiohttp
 import xmltodict
 
-from .model import GameCollection, GameId, MappedGameCollection
+from .model import GameCollection, GameId, map_collection
 
 
 class BGGSession:
@@ -67,20 +67,13 @@ class BGGSession:
     async def __aexit__(self, exc_type, exc, tb):
         await self.session.close()
 
-    @staticmethod
-    def collection_by_co(collection: GameCollection) -> MappedGameCollection:
-        return {
-            (item.get("@collid", ""), item.get("@objectid", "")): item
-            for item in collection
-        }
-
     async def update_quantity(
         self,
         collection: GameCollection,
         id: GameId,
         quantity: str,
     ) -> None:
-        by_co = BGGSession.collection_by_co(collection)
+        by_co = map_collection(collection)
         item = by_co.get(id, None)
         if not item:
             raise Exception(f"Object not in collection: {id}")
