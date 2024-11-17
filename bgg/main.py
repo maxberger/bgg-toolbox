@@ -2,7 +2,7 @@ import asyncio
 import json
 from configparser import ConfigParser
 from http.cookies import SimpleCookie
-from typing import Any, Dict, List, OrderedDict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import aiohttp
 import xmltodict
@@ -34,7 +34,7 @@ async def login(
         valid_cookies = [
             SimpleCookie(cookie)
             for cookie in resp.headers.getall("Set-Cookie")
-            if not "delete" in cookie
+            if "delete" not in cookie
         ]
         for cookie in valid_cookies:
             session.cookie_jar.update_cookies(cookie)
@@ -129,7 +129,7 @@ async def main():
 
         collection = await loadcollection(session)
         # print(json.dumps(collection))
-        # await export_quantities(collection)
+        await export_quantities(collection)
 
         # await update_quantity(session, collection, "125497554", "203828", "9")
 
