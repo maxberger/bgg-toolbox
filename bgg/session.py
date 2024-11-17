@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import aiohttp
 import xmltodict
 
-from .model import GameCollection, GameId, map_collection
+from .model import Attribute, GameCollection, GameId, extract, map_collection
 
 
 class BGGSession:
@@ -77,25 +77,24 @@ class BGGSession:
         item = by_co.get(id, None)
         if not item:
             raise Exception(f"Object not in collection: {id}")
-        private = item.get("privateinfo", {})
         payload = {
             "fieldname": "ownership",
             "collid": id[0],
             "objecttype": "thing",
             "objectid": id[1],
-            "pricepaid": private.get("@pricepaid", ""),
-            "currvalue": private.get("@currvalue", ""),
+            "pricepaid": extract(Attribute.pricepaid, item),
+            "currvalue": extract(Attribute.currvalue, item),
             "quantity": quantity,
-            "acquisitiondate": private.get("@acquisitiondate", ""),
+            "acquisitiondate": extract(Attribute.acquisitiondate, item),
             "dateinput": "",
-            "acquiredfrom": private.get("@acquiredfrom", ""),
+            "acquiredfrom": extract(Attribute.acquiredfrom, item),
             "invdate": "",
             "dateinput": "",
-            "invlocation": private.get("@inventorylocation", ""),
+            "invlocation": extract(Attribute.invlocation, item),
             "B1": "Cancel",
-            "pp_currency": private.get("@pp_currency", ""),
+            "pp_currency": extract(Attribute.pp_currency, item),
             "cv_currency": "",
-            "privatecomment": private.get("privatecomment", ""),
+            "privatecomment": extract(Attribute.privatecomment, item),
             "ajax": 1,
             "action": "savedata",
         }
