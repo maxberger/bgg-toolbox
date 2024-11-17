@@ -2,10 +2,12 @@ import asyncio
 import json
 from configparser import ConfigParser
 from http.cookies import SimpleCookie
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import aiohttp
 import xmltodict
+
+from .model import GameCollection, GameId, MappedGameCollection
 
 
 class BGGSession:
@@ -41,7 +43,7 @@ class BGGSession:
             for cookie in valid_cookies:
                 self.session.cookie_jar.update_cookies(cookie)
 
-    async def load_collection(self) -> List[Dict[str, Any]]:
+    async def load_collection(self) -> GameCollection:
         status = 202
         while status == 202:
             async with self.session.get(
@@ -66,9 +68,7 @@ class BGGSession:
         await self.session.close()
 
     @staticmethod
-    def collection_by_co(
-        collection: List[Dict[str, Any]]
-    ) -> Dict[Tuple[str, str], Dict[str, Any]]:
+    def collection_by_co(collection: GameCollection) -> MappedGameCollection:
         return {
             (item.get("@collid", ""), item.get("@objectid", "")): item
             for item in collection
@@ -76,21 +76,20 @@ class BGGSession:
 
     async def update_quantity(
         self,
-        collection: List[Dict[str, Any]],
-        collid: str,
-        objectid: str,
+        collection: GameCollection,
+        id: GameId,
         quantity: str,
     ) -> None:
         by_co = BGGSession.collection_by_co(collection)
-        item = by_co.get((collid, objectid), None)
+        item = by_co.get(id, None)
         if not item:
-            raise Exception(f"Object not in collection: {collid, objectid}")
+            raise Exception(f"Object not in collection: {id}")
         private = item.get("privateinfo", {})
         payload = {
             "fieldname": "ownership",
-            "collid": collid,
+            "collid": id[0],
             "objecttype": "thing",
-            "objectid": objectid,
+            "objectid": id[1],
             "pricepaid": private.get("@pricepaid", ""),
             "currvalue": private.get("@currvalue", ""),
             "quantity": quantity,
